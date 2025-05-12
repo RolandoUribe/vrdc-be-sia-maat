@@ -181,13 +181,27 @@ public class PdfUtils {
     }
 
     // Método genérico para agregar tablas dinámicas sin formatear los montos
+    public static <T> void agregarSeccionTablaSinDatos(Document document,
+            String titulo) {
+        Color grisSuave = new DeviceRgb(220, 220, 220); // RGB más claro
+        document.add(PdfUtils.estiloTituloSeccionInforme(titulo));
+        Table table = new Table(1)
+                .setWidth(UnitValue.createPercentValue(100))
+                .setBorder(new SolidBorder(grisSuave, 1));
+        Cell cell = new Cell(1, 1).add(new Paragraph("No existe información para este rut"));
+        table.addCell(cell);
+        document.add(table);
+        document.add(new Paragraph("\n"));
+
+    }
+
+    // Método genérico para agregar tablas dinámicas sin formatear los montos
     public static <T> void agregarSeccionTabla(Document document,
             String titulo, List<T> lista,
             String[] listaColumnas,
             float[] anchoColumnas) {
 
         Color grisSuave = new DeviceRgb(220, 220, 220); // RGB más claro
-
         document.add(PdfUtils.estiloTituloSeccionInforme(titulo));
 
         // Definir la tabla con n columnas y ancho total del documento
@@ -342,7 +356,8 @@ public class PdfUtils {
         }
     }
 
-    public static void agregarTitulo(Document document, String titulo, String... subtitulos) {
+    public static void agregarTitulo(Document document, String titulo,
+            String... subtitulos) {
         // Título principal
         document.add(new Paragraph(titulo)
                 .setBold()
@@ -748,7 +763,8 @@ public class PdfUtils {
 
         Table tabla = new Table(UnitValue.createPercentArray(nombresIndicadores.size()))
                 .useAllAvailableWidth()
-                .setMarginBottom(20);
+                .setMarginBottom(20)
+                .setBorder(new SolidBorder(grisSuave, 0));
 
         for (int i = 0; i < nombresIndicadores.size(); i++) {
             String nombreBase = nombresIndicadores.get(i);
@@ -781,7 +797,86 @@ public class PdfUtils {
                     .setHorizontalAlignment(HorizontalAlignment.CENTER);
 
             Div contenedor = new Div()
+                    .add(image).setTextAlignment(TextAlignment.CENTER);
+
+            Cell cell = new Cell()
+                    .setBorder(Border.NO_BORDER)
+                    .add(contenedor);
+
+            tabla.addCell(cell);
+        }
+
+        document.add(tabla);
+    }
+
+    public static void dibujarImagenesIndicadoresConGlosas(Document document, List<String> nombresIndicadores,
+            List<Boolean> indicadores) {
+        float anchoImagen = 55f;
+        float altoImagen = 55f;
+
+        Table tabla = new Table(UnitValue.createPercentArray(nombresIndicadores.size()))
+                .useAllAvailableWidth()
+                .setMarginBottom(20)
+                .setBorder(new SolidBorder(grisSuave, 0));
+
+        for (int i = 0; i < nombresIndicadores.size(); i++) {
+            String nombreBase = nombresIndicadores.get(i);
+            String nombreArchivo = "static/";
+            String nombreGlosa = "";
+            boolean valor = indicadores.get(i);
+
+            if (nombreBase.equals("protymor")) {
+                nombreArchivo = nombreArchivo + (valor ? "alertaroja" : "informacionpositiva") + ".png";
+                nombreGlosa = "Protestos y Morosidades";
+            }
+            if (nombreBase.equals("boletin")) {
+                nombreArchivo = nombreArchivo + (valor ? "alertaroja" : "informacionpositiva") + ".png";
+                nombreGlosa = "Boletín Laboral";
+            }
+            if (nombreBase.equals("vehiculos")) {
+                nombreArchivo = nombreArchivo + (valor ? "informacionpositiva" : "blanco") + ".png";
+                nombreGlosa = "Vehículos Bienes Raíces";
+            }
+            if (nombreBase.equals("socios")) {
+                nombreArchivo = nombreArchivo + (valor ? "informacionpositiva" : "blanco") + ".png";
+                nombreGlosa = "Socios y Sociedades";
+            }
+            if (nombreBase.equals("quiebras")) {
+                nombreArchivo = nombreArchivo + (valor ? "informacionpositiva" : "blanco") + ".png";
+                nombreGlosa = "Quiebras";
+            }
+            if (nombreBase.equals("otros")) {
+                nombreArchivo = nombreArchivo + (valor ? "informacionpositiva" : "blanco") + ".png";
+                nombreGlosa = "Otros Indicadores";
+            }
+            if (nombreBase.equals("blanco")) {
+                nombreArchivo = nombreArchivo + (valor ? "blanco" : "blanco") + ".png";
+                nombreGlosa = " ";
+            }
+
+            InputStream imageStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(nombreArchivo);
+            if (imageStream == null) {
+                throw new RuntimeException("No se encontró la imagen: " + nombreArchivo);
+            }
+
+            ImageData imageData = null;
+            try {
+                imageData = ImageDataFactory.create(imageStream.readAllBytes());
+            } catch (Exception e) {
+                e.printStackTrace(); // o lanza una excepción personalizada si lo prefieres
+            }
+
+            Image image = new Image(imageData)
+                    .scaleToFit(anchoImagen, altoImagen)
+                    .setHorizontalAlignment(HorizontalAlignment.CENTER);
+
+            Paragraph etiqueta = new Paragraph(nombreGlosa)
+                    .setFontSize(8)
+                    .setTextAlignment(TextAlignment.CENTER);
+
+            Div contenedor = new Div()
                     .add(image)
+                    .add(etiqueta)
                     .setTextAlignment(TextAlignment.CENTER);
 
             Cell cell = new Cell()

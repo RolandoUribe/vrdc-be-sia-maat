@@ -101,7 +101,8 @@ public class InformesController {
             // respuesta json desde maat que viene como string
             String respuestaMaat = informeMaatClient.obtenerInforme(run, digito, userInfo, uuidConsulta, "consolidado");
 
-            System.out.println("InformesController - informeConsolidado - Respuesta Maat 2: [" + respuestaMaat + "]");
+            // System.out.println("InformesController - informeConsolidado - Respuesta Maat
+            // 2: [" + respuestaMaat + "]");
 
             if (respuestaMaat == null || respuestaMaat.isEmpty()) {
                 respuestaError = RespuestaInformeConsolidado.generarRespuestaError(uuidConsulta, "100");
@@ -219,7 +220,6 @@ public class InformesController {
             ConsultaResponsePersona respuesta = RespuestaInformePersona.generarRespuestaOK(uuidConsulta, "0",
                     respuestaMaat);
 
-            
             // Registra folio para verificar informe a posterior
             if (!esClienteAPI) {
                 // Registra folio para verificar informe a posterior
@@ -231,9 +231,9 @@ public class InformesController {
 
                 // Genera informe PDF
                 PdfPersonaService pdfService = new PdfPersonaService();
-                byte[] pdfBytes = pdfService.generatePdfFromConsulta(respuesta,                         
-                                            verificacionInforme.getFolio(),
-                                            verificacionInforme.getCodigoVerificacion());
+                byte[] pdfBytes = pdfService.generatePdfFromConsulta(respuesta,
+                        verificacionInforme.getFolio(),
+                        verificacionInforme.getCodigoVerificacion());
 
                 // Guardar el PDF en el bucket
                 String fileName = uuidConsulta + ".pdf";
@@ -326,8 +326,8 @@ public class InformesController {
                 // Genera informe PDF
                 PdfEmpresaService pdfService = new PdfEmpresaService();
                 byte[] pdfBytes = pdfService.generatePdfFromConsulta(respuesta,
-                                                            verificacionInforme.getFolio(),
-                                                            verificacionInforme.getCodigoVerificacion());
+                        verificacionInforme.getFolio(),
+                        verificacionInforme.getCodigoVerificacion());
 
                 // Guardar el PDF en el bucket
                 String fileName = uuidConsulta + ".pdf";
@@ -344,7 +344,7 @@ public class InformesController {
             } else {
                 return ResponseEntity.ok(respuesta);
             }
-            
+
         } catch (Exception e) {
             e.printStackTrace();
             respuestaError = RespuestaInformeConsolidado.generarRespuestaError(uuidConsulta, "100");
@@ -375,8 +375,6 @@ public class InformesController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
-
-
 
     private boolean validaParametros(String run, String digito, String userInfo) {
         try {

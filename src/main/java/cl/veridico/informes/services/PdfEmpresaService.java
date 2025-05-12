@@ -3,7 +3,9 @@ package cl.veridico.informes.services;
 import com.itextpdf.kernel.font.PdfFont;
 import com.itextpdf.kernel.pdf.*;
 import com.itextpdf.layout.Document;
+import com.itextpdf.layout.element.Paragraph;
 
+import cl.veridico.informes.models.RespuestaInformeEmpresa;
 import cl.veridico.informes.models.RespuestaInformeEmpresa.ConsultaResponseEmpresa;
 import cl.veridico.informes.utils.PdfUtils;
 import cl.veridico.informes.utils.UtilesVarios;
@@ -12,6 +14,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.AbstractMap.SimpleEntry;
@@ -60,14 +63,63 @@ public class PdfEmpresaService {
 
             if (consulta != null) {
 
-                List<String> textos = List.of("Protestos y\nMorosidades\nSí", "Boletín\nLaboral\nNo",
-                        "Vehículos\nBienes\nRaíces", "Socios y\nSociedades\nNo", "Quiebras\nNo",
-                        "Otros\nIndicadores\nNo");
-                List<String> colores = List.of("rojo", "gris", "verde", "gris", "gris", "gris");
+                // Comienzo a analizar los datos para generar Header de resumen del informe
+                document.add(new Paragraph("\n"));
 
-                // PdfUtils.dibujarCirculosConTexto(document, pdfDoc, textos, colores);
-                PdfUtils.dibujarCirculosConTextoBorde(document, pdfDoc, textos, colores);
-                PdfUtils.agregarLeyenda(document, font); // 👈 Aquí agregas la leyenda justo después
+                BigDecimal montoTotalProtestos = consulta.getResultado().getResumenTotalesMorosidades()
+                        .getMontoTotalProtestos();
+                BigDecimal montoTotalInfocom = consulta.getResultado().getResumenTotalesMorosidades()
+                        .getMontoTotalInfocom();
+                BigDecimal montoTotalDeudasComercio = consulta.getResultado().getResumenTotalesMorosidades()
+                        .getMontoTotalDeudasComercio();
+
+                BigDecimal montoTotalDeudasPrevisionales = consulta.getResultado().getResumenTotalesMorosidades()
+                        .getMontoTotalDeudasPrevisionales();
+                BigDecimal montoTotalDeudasLaborales = consulta.getResultado().getResumenTotalesMorosidades()
+                        .getMontoTotalDeudasLaborales();
+
+                boolean alertaRojaMorososProtestos = false;
+                if (montoTotalProtestos.compareTo(BigDecimal.ZERO) > 0 ||
+                        montoTotalInfocom.compareTo(BigDecimal.ZERO) > 0 ||
+                        montoTotalDeudasComercio.compareTo(BigDecimal.ZERO) > 0) {
+                    alertaRojaMorososProtestos = true;
+                }
+                boolean alertaRojaDeudasPrevisionales = false;
+                if (montoTotalDeudasPrevisionales.compareTo(BigDecimal.ZERO) > 0 ||
+                        montoTotalDeudasLaborales.compareTo(BigDecimal.ZERO) > 0) {
+                    alertaRojaDeudasPrevisionales = true;
+                }
+
+                long alertaQuiebras = (consulta.getResultado().getResumenConsolidado().getEventosQuiebras().equals("No")
+                        ? 0
+                        : 1);
+
+                long alertaVehiculos = consulta.getResultado().getResumenConsolidado().getVehiculos();
+                long alertaBienesRaices = consulta.getResultado().getResumenConsolidado().getBienesRaices();
+
+                long alertaSociedades = consulta.getResultado().getResumenConsolidado().getSociedades();
+                long alertaSocios = consulta.getResultado().getResumenConsolidado().getSocios();
+
+                long alertaPrendas = consulta.getResultado().getResumenConsolidado().getPrendas();
+                long alertaATributarias = consulta.getResultado().getResumenConsolidado()
+                        .getAnotacionesTributarias();
+                long alertaOrdenesNoPago = consulta.getResultado().getResumenConsolidado().getOrdenNoPago();
+
+                List<String> nombresHeader = List.of("protymor",
+                        "boletin",
+                        "vehiculos",
+                        "socios",
+                        "quiebras",
+                        "otros");
+                List<Boolean> valoresHeader = List.of(alertaRojaMorososProtestos,
+                        alertaRojaDeudasPrevisionales,
+                        (alertaVehiculos > 0 || alertaBienesRaices > 0 ? true : false),
+                        (alertaSociedades > 0 || alertaSocios > 0 ? true : false),
+                        (alertaQuiebras > 0 ? true : false),
+                        (alertaATributarias > 0 || alertaPrendas > 0 || alertaOrdenesNoPago > 0 ? true : false));
+
+                PdfUtils.dibujarImagenesIndicadoresConGlosas(document, nombresHeader, valoresHeader);
+                // fin Header de resumen del informe
 
                 // Información Corporativa
                 if (consulta.getResultado() != null
@@ -143,6 +195,25 @@ public class PdfEmpresaService {
                     }
 
                 }
+
+                // Muestra de Score de Riesgo
+                int score = consulta.getResultado().getDatosScore().getPuntaje();
+                List<String> nombresScore = List.of(
+                        "950A",
+                        "800B",
+                        "700B",
+                        "500C",
+                        "350D",
+                        "200E");
+                List<Boolean> valoresScore = List.of(
+                        (score >= 950 ? true : false),
+                        (score >= 800 && score < 950 ? true : false),
+                        (score >= 700 && score < 800 ? true : false),
+                        (score >= 500 && score < 700 ? true : false),
+                        (score >= 350 && score < 500 ? true : false),
+                        (score >= 0 && score < 350 ? true : false));
+
+                PdfUtils.dibujarImagenesScore(document, nombresScore, valoresScore);
 
                 // Resumen Morosidades
                 cl.veridico.informes.models.RespuestaInformeEmpresa.ConsultaResponseEmpresa.Resultado.ResumenTotalMorosidad resumenMorosidades = consulta
@@ -416,60 +487,64 @@ public class PdfEmpresaService {
                 String[] titPre = new String[] { "Acreedor", "Fecha Publicación", "Cuerpo", "Página",
                         "Extracto" };
                 float[] anchoColumnasPre = new float[] { 100, 100, 100, 100, 100 };
-                PdfUtils.agregarSeccionTabla(document, "Prendas", consulta.getResultado().getPrendas(),
+                PdfUtils.agregarSeccionTabla(document, "PRENDAS", consulta.getResultado().getPrendas(),
                         titPre,
                         anchoColumnasPre);
 
-                        //OJO , FALTA HABILITAR NUEVAMENTE
                 // Socios y Sociedades Personas
-                /*if (consulta.getResultado() != null
+                if (consulta.getResultado() != null
                         && consulta.getResultado().getSociedadesPersonas() != null) {
-                    List<cl.veridico.informes.models.RespuestaInformeEmpresa.ConsultaResponseEmpresa.Resultado.SociedadPersona.Sociedad> listaSyS = consulta
-                            .getResultado().getSociedadesPersonas().getSociedades();
+                    List<RespuestaInformeEmpresa.ConsultaResponseEmpresa.Resultado.SociedadPersona> listaSyS = consulta
+                            .getResultado().getSociedadesPersonas();
 
-                    for (cl.veridico.informes.models.RespuestaInformeEmpresa.ConsultaResponseEmpresa.Resultado.SociedadPersona.Sociedad item : listaSyS) {
+                    if (listaSyS != null && listaSyS.size() > 0) {
 
-                        List<SimpleEntry<String, String>> datoSociedades = new ArrayList<>(
-                                List.of(
-                                        new SimpleEntry<>("Fecha",
-                                                item.getFecha()),
-                                        new SimpleEntry<>("Contenido",
-                                                UtilesVarios.capitalizarPalabras(
-                                                        item.getContenido())),
-                                        new SimpleEntry<>("Nombre",
-                                                UtilesVarios.capitalizarPalabras(
-                                                        item.getNombre())),
-                                        new SimpleEntry<>("Rut", df
-                                                .format(item.getRut())
-                                                + "-"
-                                                + item.getDigito()),
-                                        new SimpleEntry<>("Edición",
-                                                item.getEdicion()),
-                                        new SimpleEntry<>("Cuerpo",
-                                                item.getCuerpo()),
-                                        new SimpleEntry<>("Página",
-                                                item.getPagina()),
-                                        new SimpleEntry<>("Extracto",
-                                                item.getExtracto())));
-                        PdfUtils.agregarTablaDatos(document, "SOCIOS Y SOCIEDADES",
-                                datoSociedades);
+                        for (RespuestaInformeEmpresa.ConsultaResponseEmpresa.Resultado.SociedadPersona item : listaSyS) {
 
-                        // Socios
-                        if (item.getSocios() != null) {
-                            String[] titSocios = new String[] { "Rut Socio",
-                                    "Nombre Socio", "Tipo", "Aporte" };
-                            float[] anchoColumnasSocios = new float[] { 100, 100, 100,
-                                    100 };
-                            String[] formatoSocios = new String[] { "", "capital", "",
-                                    "moneda$" };
-                            PdfUtils.agregarSeccionTablaConFormato(document, "Socios",
-                                    item.getSocios(), titSocios,
-                                    anchoColumnasSocios, formatoSocios);
+                            List<SimpleEntry<String, String>> datoSociedades = new ArrayList<>(
+                                    List.of(
+                                            new SimpleEntry<>("Fecha",
+                                                    item.getFecha()),
+                                            new SimpleEntry<>("Contenido",
+                                                    UtilesVarios.capitalizarPalabras(
+                                                            item.getContenido())),
+                                            new SimpleEntry<>("Nombre",
+                                                    UtilesVarios.capitalizarPalabras(
+                                                            item.getNombre())),
+                                            new SimpleEntry<>("Rut", df
+                                                    .format(item.getRut())
+                                                    + "-"
+                                                    + item.getDigito()),
+                                            new SimpleEntry<>("Edición",
+                                                    item.getEdicion()),
+                                            new SimpleEntry<>("Cuerpo",
+                                                    item.getCuerpo()),
+                                            new SimpleEntry<>("Página",
+                                                    item.getPagina()),
+                                            new SimpleEntry<>("Extracto",
+                                                    item.getExtracto())));
+                            PdfUtils.agregarTablaDatos(document, "SOCIOS Y SOCIEDADES",
+                                    datoSociedades);
+
+                            // Socios
+                            if (item.getSocios() != null) {
+                                String[] titSocios = new String[] { "Rut Socio",
+                                        "Nombre Socio", "Tipo", "Aporte" };
+                                float[] anchoColumnasSocios = new float[] { 100, 100, 100,
+                                        100 };
+                                String[] formatoSocios = new String[] { "", "capital", "",
+                                        "moneda$" };
+                                PdfUtils.agregarSeccionTablaConFormato(document, "SOCIOS",
+                                        item.getSocios(), titSocios,
+                                        anchoColumnasSocios, formatoSocios);
+                            }
                         }
+                    } else {
+                        PdfUtils.agregarSeccionTablaSinDatos(document, "SOCIOS Y SOCIEDADES");
                     }
 
                 }
-*/
+
                 // Consultas al Rut
                 String[] titCaR = new String[] { "Fecha Consulta", "Institución" };
                 float[] anchoColumnasCaR = new float[] { 200, 300 };

@@ -43,34 +43,34 @@ class Datos {
     @JsonProperty("Datos_Personales")
     private DatosPersonales datosPersonales;
 
-    @JsonProperty("Score")
+    @JsonProperty("ScoreMaat")
     private String ScoreMaat;
 
     @JsonProperty("Deudas_previsionales")
     @JsonDeserialize(using = ListaOErrorDeserializer.class)
     private ListaOError<DeudaPrevisional> deudasPrevisionales;
-    //private List<DeudaPrevisional> deudasPrevisionales;
+    // private List<DeudaPrevisional> deudasPrevisionales;
 
     @JsonProperty("Deudas_Laborales")
     @JsonDeserialize(using = ListaOErrorDeserializer.class)
     private ListaOError<DeudaLaboral> deudasLaborales;
-    //private List<DeudaLaboral> deudasLaborales;
+    // private List<DeudaLaboral> deudasLaborales;
 
     @JsonProperty("Protestos")
     @JsonDeserialize(using = ListaOErrorDeserializer.class)
     private ListaOError<Protesto> protestos;
-    //private List<Protesto> protestos;
+    // private List<Protesto> protestos;
 
-    //@JsonProperty("Infocom")
+    // @JsonProperty("Infocom")
     @JsonProperty("Infocom")
     @JsonDeserialize(using = ListaOErrorDeserializer.class)
     private ListaOError<Infocom> infocom;
-    //private List<Infocom> infocom;
+    // private List<Infocom> infocom;
 
     @JsonProperty("Deudas_Comercio")
     @JsonDeserialize(using = ListaOErrorDeserializer.class)
     private ListaOError<DeudaComercio> deudasComercio;
-    //private List<DeudaComercio> deudasComercio;
+    // private List<DeudaComercio> deudasComercio;
 
     @Data
     @NoArgsConstructor
