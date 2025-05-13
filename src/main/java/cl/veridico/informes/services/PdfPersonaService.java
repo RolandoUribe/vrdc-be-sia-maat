@@ -6,7 +6,6 @@ import com.itextpdf.layout.Document;
 import com.itextpdf.layout.element.Paragraph;
 
 import cl.veridico.informes.services.RespuestaInformePersona.ConsultaResponsePersona;
-import cl.veridico.informes.services.RespuestaInformePersona;
 import cl.veridico.informes.utils.PdfUtils;
 import cl.veridico.informes.utils.UtilesVarios;
 

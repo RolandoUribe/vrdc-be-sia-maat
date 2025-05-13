@@ -390,42 +390,6 @@ public class PdfUtils {
         return ImageDataFactory.create(baos.toByteArray());
     }
 
-    /*
-     * public static void agregarCircunferenciasInformativas(PdfDocument pdfDoc,
-     * PdfFont font,
-     * float startX,
-     * float y,
-     * float diameter,
-     * String[] textos,
-     * Color[] colores) {
-     * 
-     * PdfPage page = pdfDoc.getFirstPage();
-     * PdfCanvas pdfCanvas = new PdfCanvas(page);
-     * float spacing = 20;
-     * float currentX = startX;
-     * 
-     * for (int i = 0; i < textos.length; i++) {
-     * // Dibujar circunferencia sin relleno, solo borde
-     * pdfCanvas.setLineWidth(2f);
-     * pdfCanvas.setStrokeColor(colores[i]);
-     * pdfCanvas.circle(currentX + diameter / 2, y + diameter / 2, diameter / 2);
-     * pdfCanvas.stroke();
-     * 
-     * // Texto centrado dentro de la circunferencia
-     * Rectangle rect = new Rectangle(currentX, y, diameter, diameter);
-     * Canvas canvas = new Canvas(pdfCanvas, pdfDoc, rect);
-     * canvas.add(new Paragraph(textos[i])
-     * .setFont(font)
-     * .setFontSize(9)
-     * .setFontColor(colores[i]) // mismo color del borde
-     * .setTextAlignment(TextAlignment.CENTER)
-     * .setVerticalAlignment(VerticalAlignment.MIDDLE));
-     * 
-     * currentX += diameter + spacing;
-     * }
-     * }
-     */
-
     public static void agregarQR(String urlServiciosVeridico, String urlVerificacionDocumento,
             Document document, String folio, String codigoVerificacion, PdfFont font) throws Exception {
 
